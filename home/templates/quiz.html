@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Django Quiz App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container mt-5 pt-5">
+      <h2>{{ category }} Quiz</h2>
+      <div id="quiz-container">
+        <!-- Quiz questions and options will be dynamically added here -->
+      </div>
+      <button onclick="submitQuiz()">Submit Quiz</button>
+      <div id="quiz-results"></div>
+    </div>
+
+    <script>
+      const quizContainer = document.getElementById("quiz-container");
+      const quizResultsContainer = document.getElementById("quiz-results");
+      const category = "{{ category }}";
+      let questions = [];
+
+      function fetchQuizData() {
+        fetch(`/api/get-quiz/?category=${category}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status) {
+              questions = data.data;
+              displayQuestions();
+            } else {
+              quizContainer.innerHTML = `<p>${data.message}</p>`;
+            }
+          })
+          .catch((error) => console.error(error));
+      }
+
+      function displayQuestions() {
+        let questionHTML = "";
+        questions.forEach((question, index) => {
+          questionHTML += `
+                <div>
+                    <h4>${index + 1}. ${question.question}</h4>
+                    <ul>
+                        ${queshttps://www.linkedin.com/in/tauquir-ahmed-5537b5210/tion.answers
+                          .map(
+                            (answer) => `
+                            <li>
+                                <input type="radio" id="q${index}a${answer.id}" name="question${index}" value="${answer.is_correct}">
+                                <label for="q${index}a${answer.id}">${answer.answer}</label>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                </div>
+            `;
+        });
+        quizContainer.innerHTML = questionHTML;
+      }
+
+      function submitQuiz() {
+        const selectedAnswers = [];
+        let correctAnswersCount = 0;
+
+        questions.forEach((_, index) => {
+          const selectedOption = document.querySelector(
+            `input[name="question${index}"]:checked`
+          );
+          const isCorrect = selectedOption
+            ? selectedOption.value === "true"
+            : false;
+
+          selectedAnswers.push(isCorrect);
+
+          if (isCorrect) {
+            correctAnswersCount++;
+          }
+        });
+
+        const resultsHTML = `
+            <h3>Quiz Results:</h3>
+            <p>Correct Answers: ${correctAnswersCount} / ${questions.length}</p>
+            <ul>
+                ${questions
+                  .map(
+                    (question, index) => `
+                    <li>
+                        <strong>${index + 1}. ${question.question}</strong>
+                        ${
+                          selectedAnswers[index]
+                            ? '<span style="color: green;">(Correct)</span>'
+                            : '<span style="color: red;">(Wrong)</span>'
+                        }
+                        ${
+                          !selectedAnswers[index]
+                            ? `<br>Correct Answer: ${
+                                question.answers.find(
+                                  (answer) => answer.is_correct
+                                ).answer
+                              }`
+                            : ""
+                        }
+                    </li>
+                `
+                  )
+                  .join("")}
+            </ul>
+        `;
+
+        quizResultsContainer.innerHTML = resultsHTML;
+      }
+
+      window.addEventListener("load", fetchQuizData);
+    </script>
+  </body>
+</html>
